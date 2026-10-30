@@ -5,15 +5,21 @@ import CartItem from './CartItem';
 import { addItem } from './CartSlice';
 
 function ProductList({ onHomeClick }) {
+    // State to toggle between product listing and cart views
     const [showCart, setShowCart] = useState(false);
     const [showPlants, setShowPlants] = useState(false);
-    const [addedToCart, setAddedToCart] = useState({});
 
     const dispatch = useDispatch();
+    // Retrieve cart items from Redux store
     const cartItems = useSelector(state => state.cart.items);
 
-    // Calculate total quantity of items in cart
+    // Calculate total quantity of items currently in the cart
     const totalQuantity = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+    // Helper function to check if a specific plant is already in the Redux cart
+    const isPlantInCart = (plantName) => {
+        return cartItems.some(item => item.name === plantName);
+    };
 
     const plantsArray = [
         {
@@ -246,6 +252,7 @@ function ProductList({ onHomeClick }) {
         textDecoration: 'none',
     };
 
+    // Navigate back to the home/landing page
     const handleHomeClick = (e) => {
         e.preventDefault();
         if (onHomeClick) {
@@ -253,28 +260,28 @@ function ProductList({ onHomeClick }) {
         }
     };
 
+    // Show the shopping cart view
     const handleCartClick = (e) => {
         e.preventDefault();
         setShowCart(true);
     };
 
+    // Switch view back to plant catalog from cart
     const handlePlantsClick = (e) => {
         e.preventDefault();
         setShowPlants(true);
         setShowCart(false);
     };
 
+    // Return to plant catalog when 'Continue Shopping' is clicked
     const handleContinueShopping = (e) => {
         if (e && e.preventDefault) e.preventDefault();
         setShowCart(false);
     };
 
+    // Dispatch action to add selected plant to the Redux cart
     const handleAddToCart = (product) => {
         dispatch(addItem(product));
-        setAddedToCart(prevState => ({
-            ...prevState,
-            [product.name]: true,
-        }));
     };
 
     return (
@@ -319,21 +326,24 @@ function ProductList({ onHomeClick }) {
                         <div key={index} className="category-section">
                             <h2 className="category-title" style={{ textAlign: 'center', margin: '20px 0', color: '#4CAF50' }}>{categoryObj.category}</h2>
                             <div className="product-list">
-                                {categoryObj.plants.map((plant, plantIndex) => (
-                                    <div className="product-card" key={plantIndex}>
-                                        <img className="product-image" src={plant.image} alt={plant.name} />
-                                        <div className="product-title">{plant.name}</div>
-                                        <div className="product-price">{plant.cost}</div>
-                                        <p>{plant.description}</p>
-                                        <button
-                                            className="product-button"
-                                            disabled={addedToCart[plant.name]}
-                                            onClick={() => handleAddToCart(plant)}
-                                        >
-                                            {addedToCart[plant.name] ? "Added to Cart" : "Add to Cart"}
-                                        </button>
-                                    </div>
-                                ))}
+                                {categoryObj.plants.map((plant, plantIndex) => {
+                                    const inCart = isPlantInCart(plant.name);
+                                    return (
+                                        <div className="product-card" key={plantIndex}>
+                                            <img className="product-image" src={plant.image} alt={plant.name} />
+                                            <div className="product-title">{plant.name}</div>
+                                            <div className="product-price">{plant.cost}</div>
+                                            <p>{plant.description}</p>
+                                            <button
+                                                className="product-button"
+                                                disabled={inCart}
+                                                onClick={() => handleAddToCart(plant)}
+                                            >
+                                                {inCart ? "Added to Cart" : "Add to Cart"}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
